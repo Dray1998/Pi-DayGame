@@ -117,7 +117,7 @@ btn10.grid(column=2, row=4)
 
 
 label1=Label(lowestframe,text="Total Chances are : 5",font='Helvetica 18 bold', pady=10)
-label2=Label(topframe,text="3.",wrap=250 , pady=20)
+label2=Label(topframe,text="3.",wrap=250,font='msserif 11' , pady=20)
 
 label1.grid(row=5,column=1)
 label2.grid(row=1,column=1)
