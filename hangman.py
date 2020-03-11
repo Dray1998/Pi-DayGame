@@ -6,19 +6,27 @@ import tkinter as tk
 from PIL import ImageTk, Image
 
 window = Tk()
-topframe = Frame(window)
-topframe.pack()
-
-middleframe = Frame(window)
-middleframe.pack(side=TOP)
-
-bottomframe = Frame(window)
-bottomframe.pack(side=BOTTOM)
 
 leftframe = Frame(window)
-leftframe.pack(side=LEFT)
+leftframe.grid(row=0, column=1)
 
-window.title("Ready to Hang!! If you didn't find the word less than 4 chances")
+rightframe = Frame(window)
+rightframe.grid(row=0, column=2)
+
+topframe = Frame(leftframe)
+topframe.grid(row=0, column=0)
+
+middleframe = Frame(leftframe)
+middleframe.grid(row=1, column=0, pady=10)
+
+bottomframe = Frame(leftframe)
+bottomframe.grid(row=2, column=0)
+
+lowestframe = Frame(leftframe)
+lowestframe.grid(row=3, column=0)
+
+window.title("UCSI IET Pi-Day Game!!!!")
+window.iconbitmap(r'iet_logo_get_icon.ico')
 
 chances=4
 pi="3."
@@ -28,9 +36,27 @@ image_paths=['hang.png','img4.png','img3.png','img2.png','img1.png']
 img = Image.open(image_paths[chances])
 img = img.resize((200, 200), Image.ANTIALIAS)
 img= ImageTk.PhotoImage(img)
-panel = Label(leftframe, image = img)
-panel.grid(column=2, row=0)
-
+panel = Label(middleframe, image = img)
+panel.grid(column=1, row=1)
+'''
+img1 = Image.open('fact.jpg')
+#img1 = img1.resize((200, 200), Image.ANTIALIAS)
+img1 = ImageTk.PhotoImage(img1)
+fact = Label(rightframe, image = img1)
+fact.grid(column=1, row=0)
+'''
+img2 = Image.open('jokes.png')
+#img2 = img2.resize((200, 200), Image.ANTIALIAS)
+img2 = ImageTk.PhotoImage(img2)
+joke = Label(rightframe, image = img2)
+joke.grid(column=2, row=1)
+'''
+img3 = Image.open('memes.jpg')
+#img3 = img3.resize((200, 200), Image.ANTIALIAS)
+img3 = ImageTk.PhotoImage(img3)
+meme = Label(rightframe, image = img3)
+meme.grid(column=2, row=1)
+'''
 def clicked(alphabet):
     global chances
     global sequence
@@ -90,11 +116,11 @@ btn10 = Button(bottomframe, text="0",bg="skyBlue", fg="Black",width=3,height=1,f
 btn10.grid(column=2, row=4)
 
 
-label1=Label(bottomframe,text="Total Chances are : 5")
-label2=Label(topframe,text="3.",wrap=250)
+label1=Label(lowestframe,text="Total Chances are : 5",font='Helvetica 18 bold', pady=10)
+label2=Label(topframe,text="3.",wrap=250 , pady=20)
 
-label1.grid(row=5,column=0)
-label2.grid(row=0,column=3)
+label1.grid(row=5,column=1)
+label2.grid(row=1,column=1)
 
 window.bind('<KeyPress>', down)
 window.bind('<KeyRelease>', up)
