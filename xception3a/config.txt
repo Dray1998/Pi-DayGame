@@ -1,0 +1,110 @@
+import tensorflow as tf
+from tensorflow.keras.applications.xception import Xception, preprocess_input
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Dropout, GlobalAveragePooling2D
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+TrainFile = 'chest_xray/trainA'
+TestFile = 'chest_xray/test'
+WeightFile = 'weights/FYPXception/FYPXceptionV3.h5'
+SaveFile = 'chest_xray/example2'
+
+num_classes = 2
+image_size = 299
+NumEpoch = 30
+
+my_new_model = Sequential()
+my_new_model.add(Xception(include_top=False, pooling='avg', weights='imagenet'))
+
+my_new_model.add(Flatten())
+my_new_model.add(Dense(1024, activation='relu'))
+my_new_model.add(Dropout(0.5))
+my_new_model.add(Dense(num_classes, activation='softmax'))
+
+my_new_model.layers[0].trainable = False
+my_new_model.summary()
+
+opt = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+my_new_model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+
+data_generator = ImageDataGenerator(preprocessing_function=preprocess_input)
+
+# data_generator_with_aug = ImageDataGenerator(preprocessing_function=preprocess_input, horizontal_flip=True, width_shift_range = 0.2, height_shift_range = 0.2, brightness_range=[0.2,1.0] , zoom_range=[0.8,1.2])
+# data_generator_with_aug = ImageDataGenerator(preprocessing_function=preprocess_input, horizontal_flip=True,rotation_range=15, brightness_range=[0.2,1.0] , zoom_range=[0.5,1.0])
+data_generator_with_aug = ImageDataGenerator(preprocessing_function=preprocess_input, horizontal_flip=True, width_shift_range = 0.15, height_shift_range = 0.2, rotation_range=45, shear_range=16)
+
+train_generator = data_generator_with_aug.flow_from_directory(
+        TrainFile,
+        target_size=(image_size, image_size),
+        batch_size=32,
+        shuffle=True,
+        class_mode='categorical')
+
+# for 5216 data, batch size is 32
+# for 7898 data,batch size is 22
+
+test_generator = data_generator.flow_from_directory(
+        TestFile,
+        target_size=(image_size, image_size),
+        batch_size=1,
+        shuffle=False,
+        class_mode='categorical')
+
+checkpoint=tf.keras.callbacks.ModelCheckpoint(WeightFile, monitor='val_accuracy', save_best_only=True, mode='max',verbose=1)
+lr_reduce=tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.9, patience=3,verbose=1)
+
+my_new_model.fit(x=train_generator, steps_per_epoch=163, validation_data=test_generator, validation_steps=640,callbacks=[checkpoint],epochs= NumEpoch)
+
+# for 5216 data, steps_per_epoch is 163
+# for 7898 data, steps_per_epoch is 369
+
+import matplotlib.pyplot as plt
+
+# plot the loss
+plt.plot( my_new_model.history.history['loss'])
+plt.plot( my_new_model.history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('PLOT/LossVal_loss')
+plt.close()
+
+# plot the accuracy
+plt.plot( my_new_model.history.history['accuracy'])
+plt.plot( my_new_model.history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.savefig('PLOT/AccVal_acc')
+plt.close()
+
+########################
+### EVALUATION #########
+########################
+
+model = tf.keras.models.load_model(WeightFile)
+
+from sklearn.metrics import confusion_matrix
+import numpy as np
+
+#Confution Matrix
+Y_pred =  model.predict(x=test_generator)
+y_pred = np.argmax(Y_pred, axis=1)
+data = confusion_matrix(test_generator.classes, y_pred)
+
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
+
+Plot_size = num_classes
+df_cm = pd.DataFrame(data, range(Plot_size), range(Plot_size))
+sn.set(font_scale=1.4) # for label size
+sn.heatmap(df_cm, annot=True, annot_kws={"size": 16}, fmt='g') # font size
+
+plt.savefig('PLOT/Conf_Matrix')
+plt.close()
+
+scores = model.evaluate(x=test_generator)
+print("Accuracy = ", scores[1])
